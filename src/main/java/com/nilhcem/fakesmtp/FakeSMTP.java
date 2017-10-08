@@ -1,23 +1,25 @@
 package com.nilhcem.fakesmtp;
 
-import java.awt.EventQueue;
-import java.awt.Toolkit;
-import java.net.InetAddress;
-import java.net.URL;
-import java.net.UnknownHostException;
-
-import javax.swing.UIManager;
-
-import org.apache.commons.cli.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.apple.eawt.Application;
+import com.josemleon.CommandlineParser;
+import com.josemleon.GetEffectiveProperty;
+import com.josemleon.GetProperty;
+import com.josemleon.Parser;
+import com.nilhcem.fakesmtp.configs.AppProperties;
 import com.nilhcem.fakesmtp.core.ArgsHandler;
 import com.nilhcem.fakesmtp.core.Configuration;
 import com.nilhcem.fakesmtp.core.exception.UncaughtExceptionHandler;
 import com.nilhcem.fakesmtp.gui.MainFrame;
 import com.nilhcem.fakesmtp.server.SMTPServerHandler;
+import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
 
 /**
  * Entry point of the application.
@@ -26,7 +28,9 @@ import com.nilhcem.fakesmtp.server.SMTPServerHandler;
  * @since 1.0
  */
 public final class FakeSMTP {
-	private static final Logger LOGGER = LoggerFactory.getLogger(FakeSMTP.class);
+	private static final Logger log = LoggerFactory.getLogger(FakeSMTP.class);
+	private static final String APPLICATION_PROPERTIES = "application.properties";
+
 
 	private FakeSMTP() {
 		throw new UnsupportedOperationException();
@@ -49,23 +53,34 @@ public final class FakeSMTP {
 	 *
 	 * @param args a list of command line parameters.
 	 */
-	public static void main(final String[] args) {
+	public static void main(final String[] args) throws Exception {
+		// Starting here, we are going the job Spring would normally do
+		AppProperties appProperties = null;
+		Parser cmdlineParser = new CommandlineParser(args);
 		try {
-			ArgsHandler.INSTANCE.handleArgs(args);
-		} catch (ParseException e) {
-			ArgsHandler.INSTANCE.displayUsage();
-			return;
+			appProperties = new AppProperties(
+					new GetEffectiveProperty(
+							new GetProperty(
+									APPLICATION_PROPERTIES,
+									cmdlineParser
+							),
+							cmdlineParser
+					)
+			);
+		} catch (Exception e) {
+			log.error(String.format("Really bad problem trying to find resource %s", APPLICATION_PROPERTIES));
+			System.exit(1);
 		}
 
-		if (ArgsHandler.INSTANCE.shouldStartInBackground()) {
+		if (appProperties.startInBackground()) {
 			try {
 				SMTPServerHandler.INSTANCE.startServer(getPort(), getBindAddress());
 			} catch (NumberFormatException e) {
-				LOGGER.error("Error: Invalid port number", e);
+				log.error("Error: Invalid port number", e);
 			} catch (UnknownHostException e) {
-				LOGGER.error("Error: Invalid bind address", e);
+				log.error("Error: Invalid bind address", e);
 			} catch (Exception e) {
-				LOGGER.error("Failed to auto-start server in background", e);
+				log.error("Failed to auto-start server in background", e);
 			}
 		} else {
             System.setProperty("mail.mime.decodetext.strict", "false");
@@ -80,9 +95,9 @@ public final class FakeSMTP {
 							Application.getApplication().setDockIconImage(Toolkit.getDefaultToolkit().getImage(envelopeImage));
 						}
 					} catch (RuntimeException e) {
-						LOGGER.debug("Error: {} - This is probably because we run on a non-Mac platform and these components are not implemented", e.getMessage());
+						log.debug("Error: {} - This is probably because we run on a non-Mac platform and these components are not implemented", e.getMessage());
 					} catch (Exception e) {
-						LOGGER.error("", e);
+						log.error("", e);
 					}
 
 					System.setProperty("apple.laf.useScreenMenuBar", "true");
@@ -91,7 +106,7 @@ public final class FakeSMTP {
 					try {
 						UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 					} catch (Exception e) {
-						LOGGER.error("", e);
+						log.error("", e);
 					}
 
 					new MainFrame();

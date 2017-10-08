@@ -18,6 +18,12 @@
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>com.josemleon</groupId>
+			<artifactId>recon</artifactId>
+			<version>1.0</version>
+		</dependency>
+
 		<!-- MIG Layout: layout for Swing -->
 		<dependency>
 			<groupId>com.miglayout</groupId>
