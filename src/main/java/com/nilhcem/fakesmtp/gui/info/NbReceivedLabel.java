@@ -20,15 +20,15 @@ import org.slf4j.LoggerFactory;
  * @since 1.0
  */
 public final class NbReceivedLabel implements Observer {
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(NbReceivedLabel.class);
-
 	private final JLabel nbReceived = new JLabel("0");
+	private final UIModel uiModel;
 
 	/**
 	 * Creates the label class (with a bold font).
 	 */
-	public NbReceivedLabel() {
+	public NbReceivedLabel(UIModel uiModel) {
+		this.uiModel = uiModel;
 		Font boldFont = new Font(nbReceived.getFont().getName(), Font.BOLD, nbReceived.getFont().getSize());
 		nbReceived.setFont(boldFont);
 	}
@@ -59,15 +59,14 @@ public final class NbReceivedLabel implements Observer {
 	@Override
 	public void update(Observable o, Object arg) {
 		if (o instanceof MailSaver) {
-			UIModel model = UIModel.INSTANCE;
-			int countMsg = model.getNbMessageReceived() + 1;
+			int countMsg = this.uiModel.getNbMessageReceived() + 1;
 			String countMsgStr = Integer.toString(countMsg);
 
-			model.setNbMessageReceived(countMsg);
+			this.uiModel.setNbMessageReceived(countMsg);
 			updateDockIconBadge(countMsgStr);
 			nbReceived.setText(countMsgStr);
 		} else if (o instanceof ClearAllButton) {
-			UIModel.INSTANCE.setNbMessageReceived(0);
+			this.uiModel.setNbMessageReceived(0);
 			updateDockIconBadge("");
 			nbReceived.setText("0");
 		}

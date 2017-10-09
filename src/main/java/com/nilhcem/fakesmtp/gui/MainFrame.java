@@ -1,21 +1,18 @@
 package com.nilhcem.fakesmtp.gui;
 
-import com.nilhcem.fakesmtp.core.ArgsHandler;
 import com.nilhcem.fakesmtp.core.Configuration;
 import com.nilhcem.fakesmtp.core.exception.UncaughtExceptionHandler;
 import com.nilhcem.fakesmtp.gui.listeners.MainWindowListener;
 import com.nilhcem.fakesmtp.model.UIModel;
 import com.nilhcem.fakesmtp.server.SMTPServerHandler;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JFrame;
-import java.awt.Dimension;
-import java.awt.Image;
-import java.awt.Toolkit;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import org.slf4j.Logger;
 
 /**
  * Provides the main window of the application.
@@ -27,9 +24,13 @@ public final class MainFrame {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MainFrame.class);
 
-	private final JFrame mainFrame = new JFrame(Configuration.INSTANCE.get("application.title"));
-	private final MenuBar menu = new MenuBar(this);
-	private final MainPanel panel = new MainPanel(menu);
+	private JFrame mainFrame;
+	private MenuBar menu;
+	private MainPanel panel;
+	private SMTPServerHandler smtpServerHandler;
+	private Configuration configuration;
+	private int defaultPort;
+	private String emailDefaultDirectory;
 
 	/**
 	 * Creates the main window and makes it visible.
@@ -48,15 +49,17 @@ public final class MainFrame {
 	 * <i>(Creative Commons Attribution 3.0 License)</i>.
 	 * </p>
 	 */
-	public MainFrame() {
+	public MainFrame(MainPanel mainPanel, Dimension frameSize, MenuBar menuBar, MainWindowListener windowListener, String applicationTitle, String appIconPath, final SMTPServerHandler smtpServerHandler, int smtpPort, String outputDirectory, Configuration configuration, UIModel uiModel, String emailDefaultDirectory, int defaultPort) {
+		this.configuration = configuration;
+		this.defaultPort = defaultPort;
+		this.mainFrame = new JFrame(applicationTitle);
+		this.emailDefaultDirectory = emailDefaultDirectory;
+		menu = menuBar;
+        this.smtpServerHandler = smtpServerHandler;
+        panel = mainPanel;
 		((UncaughtExceptionHandler) Thread.getDefaultUncaughtExceptionHandler()).setParentComponent(panel.get());
-		Dimension frameSize = new Dimension(Integer.parseInt(Configuration.INSTANCE.get("application.min.width")),
-			Integer.parseInt(Configuration.INSTANCE.get("application.min.height")));
-
 		Image iconImage = Toolkit.getDefaultToolkit().getImage(
-			getClass().getResource(Configuration.INSTANCE.get("application.icon.path")));
-
-		MainWindowListener windowListener = new MainWindowListener(this);
+			getClass().getResource(appIconPath));
 
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainFrame.addWindowListener(new WindowAdapter() {
@@ -79,25 +82,27 @@ public final class MainFrame {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
-				SMTPServerHandler.INSTANCE.stopServer();
+				smtpServerHandler.stopServer();
 			}
 		});
 
 		// Restore last saved smtp port (if not overridden by the user)
-		String smtpPort = ArgsHandler.INSTANCE.getPort();
-		if (smtpPort == null) {
-			smtpPort = Configuration.INSTANCE.get("smtp.default.port");
+		String port;
+		if (smtpPort == 0) {
+			port = String.valueOf(this.defaultPort);
+		} else {
+			port = String.valueOf(smtpPort);
 		}
-		panel.getPortText().setText(smtpPort);
+		panel.getPortText().setText(port);
 
 		// Restore last emails directory (if not overridden by the user)
-		String emailsDir = ArgsHandler.INSTANCE.getOutputDirectory();
+		String emailsDir = outputDirectory;
 		if (emailsDir == null) {
-			emailsDir = Configuration.INSTANCE.get("emails.default.dir");
+			emailsDir = this.emailDefaultDirectory;
 		}
 		if (emailsDir != null && !emailsDir.isEmpty()) {
 			panel.getSaveMsgTextField().get().setText(emailsDir);
-			UIModel.INSTANCE.setSavePath(emailsDir);
+			uiModel.setSavePath(emailsDir);
 		}
 
 		mainFrame.setVisible(true);
@@ -106,17 +111,17 @@ public final class MainFrame {
 	public void close() {
 		LOGGER.debug("Closing the application and saving the configuration");
 
-		Configuration.INSTANCE.set("smtp.default.port", panel.getPortText().get().getText());
-		Configuration.INSTANCE.set("emails.default.dir", panel.getSaveMsgTextField().get().getText());
+		this.configuration.set("smtp.default.port", panel.getPortText().get().getText());
+		this.configuration.set("emails.default.dir", panel.getSaveMsgTextField().get().getText());
 
 		try {
-			Configuration.INSTANCE.saveToUserProfile();
+			this.configuration.saveToUserProfile();
 		} catch (IOException ex) {
 			LOGGER.error("Could not save configuration", ex);
 		}
 		// Check for SMTP server running and stop it
-		if (SMTPServerHandler.INSTANCE.getSmtpServer().isRunning()) {
-			SMTPServerHandler.INSTANCE.getSmtpServer().stop();
+		if (this.smtpServerHandler.getSmtpServer().isRunning()) {
+			this.smtpServerHandler.getSmtpServer().stop();
 		}
 
 		mainFrame.dispose();

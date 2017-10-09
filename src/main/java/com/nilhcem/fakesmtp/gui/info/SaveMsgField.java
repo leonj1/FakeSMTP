@@ -1,6 +1,5 @@
 package com.nilhcem.fakesmtp.gui.info;
 
-import com.nilhcem.fakesmtp.core.ArgsHandler;
 import com.nilhcem.fakesmtp.core.I18n;
 import com.nilhcem.fakesmtp.gui.DirChooser;
 import com.nilhcem.fakesmtp.model.UIModel;
@@ -20,7 +19,9 @@ import java.util.Observer;
  */
 public final class SaveMsgField extends Observable implements Observer {
 
-	private final JTextField saveMsgField = new JTextField(UIModel.INSTANCE.getSavePath());
+	private final JTextField saveMsgField;
+	private UIModel uiModel;
+	private boolean memoryModeEnabled;
 
 	/**
 	 * Creates a text field and adds a mouse listener, to display the directory chooser dialog when a user clicks on the field.
@@ -28,8 +29,13 @@ public final class SaveMsgField extends Observable implements Observer {
 	 * The text field will be disabled by default to avoid the user to type any folder directly.<br>
 	 * Instead, he can use the directory chooser dialog to select the path he wants.
 	 * </p>
+	 * @param uiModel
+	 * @param memoryModeEnabled
 	 */
-	public SaveMsgField() {
+	public SaveMsgField(UIModel uiModel, boolean memoryModeEnabled) {
+		this.uiModel = uiModel;
+		this.memoryModeEnabled = memoryModeEnabled;
+		saveMsgField = new JTextField(this.uiModel.getSavePath());
 		saveMsgField.setToolTipText(I18n.INSTANCE.get("savemsgfield.tooltip"));
 
 		// Disable edition but keep the same background color
@@ -37,7 +43,7 @@ public final class SaveMsgField extends Observable implements Observer {
 		saveMsgField.setEditable(false);
 		saveMsgField.setBackground(bg);
 
-		if (!ArgsHandler.INSTANCE.memoryModeEnabled()) {
+		if (!this.memoryModeEnabled) {
 			// Add a MouseListener
 			saveMsgField.addMouseListener(new MouseListener() {
 				@Override
@@ -91,7 +97,7 @@ public final class SaveMsgField extends Observable implements Observer {
 	@Override
 	public void update(Observable o, Object arg) {
 		if (o instanceof DirChooser) {
-			saveMsgField.setText(UIModel.INSTANCE.getSavePath());
+			saveMsgField.setText(this.uiModel.getSavePath());
 		}
 	}
 }

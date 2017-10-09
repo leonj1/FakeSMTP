@@ -1,6 +1,5 @@
 package com.nilhcem.fakesmtp.gui;
 
-import com.nilhcem.fakesmtp.core.ArgsHandler;
 import com.nilhcem.fakesmtp.core.I18n;
 import com.nilhcem.fakesmtp.gui.listeners.AboutActionListener;
 import com.nilhcem.fakesmtp.gui.listeners.ExitActionListener;
@@ -22,19 +21,27 @@ public final class MenuBar extends Observable {
 
 	private final I18n i18n = I18n.INSTANCE;
 	private final JMenuBar menuBar = new JMenuBar();
-	private final MainFrame mainFrame;
+	private MainFrame mainFrame;
+	private boolean memoryModeEnabled;
+	private String applicationName;
 
 	/**
 	 * Creates the menu bar and the different menus (file / edit / help).
-	 *
-	 * @param mainFrame MainFrame class required for the closing action.
+	 *  @param mainFrame MainFrame class required for the closing action.
+	 * @param memoryModeEnabled
+	 * @param applicationName
 	 */
-	public MenuBar(MainFrame mainFrame) {
-		this.mainFrame = mainFrame;
+	public MenuBar(boolean memoryModeEnabled, String applicationName) {
+		this.memoryModeEnabled = memoryModeEnabled;
+		this.applicationName = applicationName;
 
 		menuBar.add(createFileMenu());
 		menuBar.add(createEditMenu());
 		menuBar.add(createHelpMenu());
+	}
+
+	public void setMainFrame(MainFrame mainFrame) {
+		this.mainFrame = mainFrame;
 	}
 
 	/**
@@ -80,7 +87,7 @@ public final class MenuBar extends Observable {
 
 		JMenuItem mailsLocation = new JMenuItem(i18n.get("menubar.messages.location"));
 		mailsLocation.setMnemonic(i18n.get("menubar.mnemo.msglocation").charAt(0));
-		if (ArgsHandler.INSTANCE.memoryModeEnabled()) {
+		if (this.memoryModeEnabled) {
 			mailsLocation.setEnabled(false);
 		} else {
 			mailsLocation.addActionListener(new ActionListener() {
@@ -110,7 +117,7 @@ public final class MenuBar extends Observable {
 
 		JMenuItem about = new JMenuItem(i18n.get("menubar.about"));
 		about.setMnemonic(i18n.get("menubar.mnemo.about").charAt(0));
-		about.addActionListener(new AboutActionListener(menuBar.getParent()));
+		about.addActionListener(new AboutActionListener(menuBar.getParent(), applicationName));
 
 		helpMenu.add(about);
 		return helpMenu;

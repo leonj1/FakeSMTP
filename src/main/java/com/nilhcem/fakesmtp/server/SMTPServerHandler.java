@@ -15,15 +15,23 @@ import com.nilhcem.fakesmtp.core.exception.OutOfRangePortException;
  * @author Nilhcem
  * @since 1.0
  */
-public enum SMTPServerHandler {
-	INSTANCE;
-
+public class SMTPServerHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SMTPServerHandler.class);
-	private final MailSaver mailSaver = new MailSaver();
-	private final MailListener myListener = new MailListener(mailSaver);
-	private final SMTPServer smtpServer = new SMTPServer(new SimpleMessageListenerAdapter(myListener), new SMTPAuthHandlerFactory());
 
-	SMTPServerHandler() {
+	private final MailSaver mailSaver;
+	private final MailListener mailListener;
+	private final SMTPServer smtpServer;
+
+//	SMTPServerHandler() {
+//		this.mailSaver = new MailSaver();
+//		this.myListener = new MailListener(mailSaver);
+//		this.smtpServer = new SMTPServer(new SimpleMessageListenerAdapter(myListener), new SMTPAuthHandlerFactory());
+//	}
+
+	public SMTPServerHandler(MailSaver mailSaver, MailListener mailListener, SMTPServer smtpServer) {
+		this.mailSaver = mailSaver;
+		this.mailListener = mailListener;
+		this.smtpServer = smtpServer;
 	}
 
 	/**
@@ -38,9 +46,9 @@ public enum SMTPServerHandler {
 	public void startServer(int port, InetAddress bindAddress) throws BindPortException, OutOfRangePortException {
 		LOGGER.debug("Starting server on port {}", port);
 		try {
-			smtpServer.setBindAddress(bindAddress);
-			smtpServer.setPort(port);
-			smtpServer.start();
+			this.smtpServer.setBindAddress(bindAddress);
+			this.smtpServer.setPort(port);
+			this.smtpServer.start();
 		} catch (RuntimeException exception) {
 			if (exception.getMessage().contains("BindException")) { // Can't open port
 				LOGGER.error("{}. Port {}", exception.getMessage(), port);
@@ -62,9 +70,9 @@ public enum SMTPServerHandler {
 	 * </p>
 	 */
 	public void stopServer() {
-		if (smtpServer.isRunning()) {
+		if (this.smtpServer.isRunning()) {
 			LOGGER.debug("Stopping server");
-			smtpServer.stop();
+			this.smtpServer.stop();
 		}
 	}
 

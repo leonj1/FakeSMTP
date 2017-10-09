@@ -1,7 +1,5 @@
 package com.nilhcem.fakesmtp.server;
 
-import com.nilhcem.fakesmtp.core.ArgsHandler;
-import com.nilhcem.fakesmtp.core.Configuration;
 import com.nilhcem.fakesmtp.core.I18n;
 import com.nilhcem.fakesmtp.model.EmailModel;
 import com.nilhcem.fakesmtp.model.UIModel;
@@ -11,9 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
@@ -36,8 +34,19 @@ public final class MailSaver extends Observable {
 	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 	// This can be a static variable since it is Thread Safe
 	private static final Pattern SUBJECT_PATTERN = Pattern.compile("^Subject: (.*)$");
-
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("ddMMyyhhmmssSSS");
+	private UIModel uiModel;
+	private boolean memoryModeEnabled;
+	private String emailSuffix;
+
+	public MailSaver(boolean memoryModeEnabled, String emailSuffix) {
+		this.memoryModeEnabled = memoryModeEnabled;
+		this.emailSuffix = emailSuffix;
+	}
+
+	public void setUiModel(UIModel uiModel) {
+		this.uiModel = uiModel;
+	}
 
 	/**
 	 * Saves incoming email in file system and notifies observers.
@@ -48,7 +57,7 @@ public final class MailSaver extends Observable {
 	 * @see com.nilhcem.fakesmtp.gui.MainPanel#addObservers to see which observers will be notified
 	 */
 	public void saveEmailAndNotify(String from, String to, InputStream data) {
-		List<String> relayDomains = UIModel.INSTANCE.getRelayDomains();
+		List<String> relayDomains = this.uiModel.getRelayDomains();
 
 		if (relayDomains != null) {
 			boolean matches = false;
@@ -88,8 +97,8 @@ public final class MailSaver extends Observable {
 	 * Deletes all received emails from file system.
 	 */
 	public void deleteEmails() {
-		Map<Integer, String> mails = UIModel.INSTANCE.getListMailsMap();
-		if (ArgsHandler.INSTANCE.memoryModeEnabled()) {
+		Map<Integer, String> mails = this.uiModel.getListMailsMap();
+		if (this.memoryModeEnabled) {
 			return;
 		}
 		for (String value : mails.values()) {
@@ -155,10 +164,10 @@ public final class MailSaver extends Observable {
 	 * @return the path of the created file.
 	 */
 	private String saveEmailToFile(String mailContent) {
-		if (ArgsHandler.INSTANCE.memoryModeEnabled()) {
+		if (this.memoryModeEnabled) {
 			return null;
 		}
-		String filePath = String.format("%s%s%s", UIModel.INSTANCE.getSavePath(), File.separator,
+		String filePath = String.format("%s%s%s", this.uiModel.getSavePath(), File.separator,
 				dateFormat.format(new Date()));
 
 		// Create file
@@ -171,7 +180,7 @@ public final class MailSaver extends Observable {
 			} else {
 				iStr = "";
 			}
-			file = new File(filePath + iStr + Configuration.INSTANCE.get("emails.suffix"));
+			file = new File(filePath + iStr + this.emailSuffix);
 		}
 
 		// Copy String to file

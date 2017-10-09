@@ -8,7 +8,6 @@ import com.nilhcem.fakesmtp.core.exception.OutOfRangePortException;
 import com.nilhcem.fakesmtp.server.SMTPServerHandler;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +23,21 @@ import java.util.Map;
  * @since 1.0
  * @see <a href="link">http://martinfowler.com/eaaDev/PresentationModel.html</a>
  */
-public enum UIModel {
-	INSTANCE;
-
-	private boolean started = false; // server is not started by default
-	private String portStr;
-	private String hostStr;
+public class UIModel {
+	private boolean started;	// server is not started by default
+	private int port;
+	private InetAddress host;
 	private int nbMessageReceived = 0;
 	private String savePath = I18n.INSTANCE.get("emails.default.dir");
 	private final Map<Integer, String> listMailsMap = new HashMap<Integer, String>();
 	private List<String> relayDomains;
+	private SMTPServerHandler smtpServerHandler;
 
-	UIModel() {
+	public UIModel(SMTPServerHandler smtpServerHandler, InetAddress host, int port) {
+		this.smtpServerHandler = smtpServerHandler;
+		this.host = host;
+		this.port = port;
+		this.started = false;
 	}
 
 	/**
@@ -54,21 +56,12 @@ public enum UIModel {
 		if (started) {
 			// Do nothing. We can't stop the server. User has to quit the app (issue with SubethaSMTP)
 		} else {
-			try {
-				int port = Integer.parseInt(portStr);
-				InetAddress host = null;
-				if (hostStr != null && !hostStr.isEmpty()) {
-					host = InetAddress.getByName(hostStr);
-				}
-
-				SMTPServerHandler.INSTANCE.startServer(port, host);
-			} catch (NumberFormatException e) {
-				throw new InvalidPortException(e);
-			} catch	(UnknownHostException e) {
-				throw new InvalidHostException(e, hostStr);
-			}
+			this.smtpServerHandler.startServer(
+					this.port,
+					this.host
+			);
+			this.started = true;
 		}
-		started = !started;
 	}
 
 	/**
@@ -80,12 +73,12 @@ public enum UIModel {
 		return started;
 	}
 
-	public void setPort(String port) {
-		this.portStr = port;
+	public void setPort(int port) {
+		this.port = port;
 	}
 
-	public void setHost(String host) {
-		this.hostStr = host;
+	public void setHost(InetAddress host) {
+		this.host = host;
 	}
 
 	public int getNbMessageReceived() {

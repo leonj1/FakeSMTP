@@ -1,6 +1,5 @@
 package com.nilhcem.fakesmtp.gui;
 
-import com.nilhcem.fakesmtp.core.ArgsHandler;
 import com.nilhcem.fakesmtp.core.I18n;
 import com.nilhcem.fakesmtp.gui.info.ClearAllButton;
 import com.nilhcem.fakesmtp.gui.info.NbReceivedLabel;
@@ -10,14 +9,15 @@ import com.nilhcem.fakesmtp.gui.info.StartServerButton;
 import com.nilhcem.fakesmtp.gui.tab.LastMailPane;
 import com.nilhcem.fakesmtp.gui.tab.LogsPane;
 import com.nilhcem.fakesmtp.gui.tab.MailsListPane;
+import com.nilhcem.fakesmtp.model.UIModel;
 import com.nilhcem.fakesmtp.server.MailSaver;
 import com.nilhcem.fakesmtp.server.SMTPServerHandler;
 import net.miginfocom.swing.MigLayout;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
+import javax.swing.*;
 import java.util.Observable;
+
+import static com.github.choonchernlim.betterPreconditions.preconditions.PreconditionFactory.expect;
 
 /**
  * Provides the main panel of the application, which will contain all the components.
@@ -26,40 +26,40 @@ import java.util.Observable;
  * @since 1.0
  */
 public final class MainPanel {
+	private UIModel uiModel;
 	// I18n
-	private final I18n i18n = I18n.INSTANCE;
+	private I18n i18n = I18n.INSTANCE;
 
 	// Panel and layout
-	private final MigLayout layout = new MigLayout(
-		"", // Layout constraints
-		"[] 10 [] [] [grow,fill]", // Column constraints
-		"[] [] 5 [] 5 [grow,fill] []"); // Row constraints
-	private final JPanel mainPanel = new JPanel(layout);
+	private MigLayout layout;
+	private JPanel mainPanel;
 
 	// Directory chooser
-	private final DirChooser dirChooser = new DirChooser(mainPanel);
+	private DirChooser dirChooser;
 
 	// Port
-	private final JLabel portLabel = new JLabel(i18n.get("mainpanel.listening.port"));
-	private final PortTextField portText = new PortTextField();
-	private final StartServerButton startServerBtn = new StartServerButton();
+	private JLabel portLabel;
+	private PortTextField portText;
+	private StartServerButton startServerBtn;
 
 	// Messages received
-	private final JLabel receivedLabel = new JLabel(i18n.get("mainpanel.messages.received"));
-	private final NbReceivedLabel nbReceivedLabel = new NbReceivedLabel();
+	private JLabel receivedLabel;
+	private NbReceivedLabel nbReceivedLabel;
 
 	// Save incoming messages to
-	private final JLabel saveMessages = new JLabel(i18n.get("mainpanel.save.messages"));
-	private final SaveMsgField saveMsgTextField = new SaveMsgField();
+	private JLabel saveMessages;
+	private SaveMsgField saveMsgTextField;
 
 	// Tab pane
-	private final JTabbedPane tabbedPane = new JTabbedPane();
-	private final LogsPane logsPane = new LogsPane();
-	private final MailsListPane mailsListPane = new MailsListPane();
-	private final LastMailPane lastMailPane = new LastMailPane();
+	private JTabbedPane tabbedPane;
+	private LogsPane logsPane;
+	private MailsListPane mailsListPane;
+	private LastMailPane lastMailPane;
 
 	// Clear all
-	private final ClearAllButton clearAll = new ClearAllButton();
+	private ClearAllButton clearAll;
+	private SMTPServerHandler smtpServerHandler;
+	private int port;
 
 	/**
 	 * Creates the main panel.
@@ -71,11 +71,27 @@ public final class MainPanel {
 	 *
 	 * @param menu the menu bar which will notify the directory file chooser.
 	 */
-	public MainPanel(Observable menu) {
+	public MainPanel(Observable menu, UIModel uiModel, SMTPServerHandler smtpServerHandler, PortTextField portTextField, MailsListPane mailsListPane, DirChooser dirChooser, MigLayout migLayout, JLabel portLabel, StartServerButton startServerButton, JLabel receivedLabel, NbReceivedLabel nbReceivedLabel, JLabel saveMessages, SaveMsgField saveMsgField, JTabbedPane tabbedPane, LogsPane logsPane, LastMailPane lastMailPane, ClearAllButton clearAllButton, int port, JPanel mainPanel) {
+		this.uiModel = uiModel;
+		this.smtpServerHandler = smtpServerHandler;
+		this.layout = migLayout;
+		this.dirChooser = dirChooser;
+		this.portLabel = portLabel;
+		this.portText = portTextField;
+		this.startServerBtn = startServerButton;
+		this.receivedLabel = receivedLabel;
+		this.nbReceivedLabel = nbReceivedLabel;
+		this.saveMessages = saveMessages;
+		this.saveMsgTextField = saveMsgField;
+		this.tabbedPane = tabbedPane;
+		this.logsPane = logsPane;
+		this.mailsListPane = mailsListPane;
+		this.lastMailPane = lastMailPane;
+		this.clearAll = clearAllButton;
+		this.port = port;
+		this.mainPanel = mainPanel;
 		assignLabelsToFields();
 		addObservers(menu);
-		buildGUI();
-		checkArgs();
 	}
 
 	/**
@@ -104,57 +120,73 @@ public final class MainPanel {
 	 */
 	private void addObservers(Observable menu) {
 		// When we want to select a directory
-		menu.addObserver(dirChooser);
-		saveMsgTextField.addObserver(dirChooser);
+		menu.addObserver(this.dirChooser);
+		this.saveMsgTextField.addObserver(this.dirChooser);
 
 		// When we click on "start server" button
-		startServerBtn.addObserver(portText);
+		this.startServerBtn.addObserver(this.portText);
 
 		// When we press "Enter" on the PortTextField
-		portText.addObserver(startServerBtn);
+		this.portText.addObserver(this.startServerBtn);
 
 		// Once we chose a directory
-		dirChooser.addObserver(saveMsgTextField);
+		this.dirChooser.addObserver(this.saveMsgTextField);
 
 		// When a message is received
-		MailSaver mailSaver = SMTPServerHandler.INSTANCE.getMailSaver();
-		mailSaver.addObserver(nbReceivedLabel);
-		mailSaver.addObserver(mailsListPane);
-		mailSaver.addObserver(lastMailPane);
-		mailSaver.addObserver(clearAll);
+		MailSaver mailSaver = this.smtpServerHandler.getMailSaver();
+		mailSaver.addObserver(this.nbReceivedLabel);
+		mailSaver.addObserver(this.mailsListPane);
+		mailSaver.addObserver(this.lastMailPane);
+		mailSaver.addObserver(this.clearAll);
 
 		// When we click on "clear all"
-		clearAll.addObserver(nbReceivedLabel);
-		clearAll.addObserver(mailsListPane);
-		clearAll.addObserver(logsPane);
-		clearAll.addObserver(lastMailPane);
+		this.clearAll.addObserver(this.nbReceivedLabel);
+		this.clearAll.addObserver(this.mailsListPane);
+		this.clearAll.addObserver(this.logsPane);
+		this.clearAll.addObserver(this.lastMailPane);
 	}
 
 	/**
 	 * Places all components in the panel.
 	 */
-	private void buildGUI() {
+	public void buildGUI() {
 		// Port / Start server
-		mainPanel.add(portLabel);
-		mainPanel.add(portText.get(), "w 60!");
-		mainPanel.add(startServerBtn.get(), "span, w 165!");
+		this.mainPanel.add(this.portLabel);
+		this.mainPanel.add(this.portText.get(), "w 60!");
+		this.mainPanel.add(this.startServerBtn.get(), "span, w 165!");
 
 		// Save messages to...
-		mainPanel.add(saveMessages);
-		mainPanel.add(saveMsgTextField.get(), "span, w 230!");
+		this.mainPanel.add(this.saveMessages);
+		this.mainPanel.add(this.saveMsgTextField.get(), "span, w 230!");
 
 		// Nb received
-		mainPanel.add(receivedLabel);
-		mainPanel.add(nbReceivedLabel.get(), "span");
+		this.mainPanel.add(this.receivedLabel);
+		this.mainPanel.add(this.nbReceivedLabel.get(), "span");
 
 		// Tab pane
-		tabbedPane.add(mailsListPane.get(), i18n.get("mainpanel.tab.mailslist"));
-		tabbedPane.add(logsPane.get(), i18n.get("mainpanel.tab.smtplog"));
-		tabbedPane.add(lastMailPane.get(), i18n.get("mainpanel.tab.lastmessage"));
-		mainPanel.add(tabbedPane, "span, grow");
+		this.tabbedPane.add(
+				this.mailsListPane.get(),
+				this.i18n.get("mainpanel.tab.mailslist")
+		);
+		this.tabbedPane.add(
+				this.logsPane.get(),
+				this.i18n.get("mainpanel.tab.smtplog")
+		);
+		this.tabbedPane.add(
+				this.lastMailPane.get(),
+				this.i18n.get("mainpanel.tab.lastmessage")
+		);
+		this.mainPanel.add(
+				this.tabbedPane,
+				"span, grow"
+		);
 
 		// Clear all
-		mainPanel.add(clearAll.get(), "span, center");
+		this.mainPanel.add(
+				this.clearAll.get(),
+				"span, center"
+		);
+		checkArgs();
 	}
 
 	/**
@@ -165,28 +197,20 @@ public final class MainPanel {
 	 * </p>
 	 */
 	private void checkArgs() {
-		ArgsHandler args = ArgsHandler.INSTANCE;
-
-		if (args.getPort() != null) {
-			portText.setText(args.getPort());
-		}
-
-		if (args.shouldStartServerAtLaunch()) {
-			startServerBtn.toggleButton();
-		}
-
-		if (args.memoryModeEnabled()) {
-			saveMsgTextField.get().setEnabled(false);
-		}
+		expect(this.port, "port").not().toBeEqual(0).check();
+		expect(this.portText, "portText").not().toBeNull().check();
+		this.portText.setText(String.valueOf(this.port));
+		this.startServerBtn.toggleButton();
+		this.saveMsgTextField.get().setEnabled(false);
 	}
 
 	/**
 	 * Assigns labels to components, for accessibility purpose.
 	 */
 	private void assignLabelsToFields() {
-		portLabel.setLabelFor(portText.get());
-		saveMessages.setLabelFor(saveMsgTextField.get());
-		receivedLabel.setLabelFor(nbReceivedLabel.get());
+		this.portLabel.setLabelFor(this.portText.get());
+		this.saveMessages.setLabelFor(this.saveMsgTextField.get());
+		this.receivedLabel.setLabelFor(this.nbReceivedLabel.get());
 	}
 
 	/**
@@ -195,7 +219,7 @@ public final class MainPanel {
 	 * @return reference to portText field. Used for saving last values to file
 	 */
 	public PortTextField getPortText() {
-		return portText;
+		return this.portText;
 	}
 
 	/**
@@ -204,6 +228,6 @@ public final class MainPanel {
      * @return reference to saveMsgTextField. Used for saving last values to file
 	 */
 	public SaveMsgField getSaveMsgTextField() {
-		return saveMsgTextField;
+		return this.saveMsgTextField;
 	}
 }

@@ -1,12 +1,10 @@
 package com.nilhcem.fakesmtp.gui.info;
 
-import com.nilhcem.fakesmtp.core.Configuration;
 import com.nilhcem.fakesmtp.core.I18n;
 import com.nilhcem.fakesmtp.server.MailSaver;
 import com.nilhcem.fakesmtp.server.SMTPServerHandler;
 
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Observable;
@@ -35,22 +33,22 @@ public final class ClearAllButton extends Observable implements Observer {
 	 * If yes, emails will be deleted from the file system.
 	 * </p>
 	 */
-	public ClearAllButton() {
+	public ClearAllButton(final SMTPServerHandler smtpServerHandler, final String applicationName) {
 		button.setToolTipText(i18n.get("clearall.tooltip"));
 		button.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int answer = JOptionPane.showConfirmDialog(button.getParent(), i18n.get("clearall.delete.email"),
-					String.format(i18n.get("clearall.title"), Configuration.INSTANCE.get("application.name")),
+					String.format(i18n.get("clearall.title"), applicationName),
 						JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 				if (answer == JOptionPane.CLOSED_OPTION) {
 					return;
 				}
 
-				synchronized (SMTPServerHandler.INSTANCE.getMailSaver().getLock()) {
+				synchronized (smtpServerHandler.getMailSaver().getLock()) {
 				    // Note: Should delete emails before calling observers, since observers will clean the model.
 					if (answer == JOptionPane.YES_OPTION) {
-						SMTPServerHandler.INSTANCE.getMailSaver().deleteEmails();
+						smtpServerHandler.getMailSaver().deleteEmails();
 					}
 				    setChanged();
 				    notifyObservers();

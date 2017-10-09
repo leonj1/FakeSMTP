@@ -1,21 +1,16 @@
 package com.nilhcem.fakesmtp.gui.listeners;
 
-import com.nilhcem.fakesmtp.core.Configuration;
 import com.nilhcem.fakesmtp.gui.MainFrame;
 import com.nilhcem.fakesmtp.gui.TrayPopup;
-import java.awt.AWTException;
-import java.awt.Frame;
-import java.awt.Image;
-import java.awt.SystemTray;
-import java.awt.Toolkit;
-import java.awt.TrayIcon;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javax.swing.JFrame;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for window minimizing and closing. If SystemTray is supported,
@@ -28,20 +23,25 @@ public class MainWindowListener extends WindowAdapter {
 
 	private TrayIcon trayIcon;
 	private final boolean useTray;
+	private String applicationName;
+	private String applicationIconPath;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MainWindowListener.class);
 
-	/**
-	 * @param mainFrame The MainFrame class used for closing actions from TrayPopup.
-	 */
-	public MainWindowListener(final MainFrame mainFrame) {
-		useTray = (SystemTray.isSupported() && Boolean.parseBoolean(Configuration.INSTANCE.get("application.tray.use")));
+	public MainWindowListener(boolean applicationTrayInUse, String applicationName, String applicationIconPath) {
+		useTray = (SystemTray.isSupported() && applicationTrayInUse);
+		this.applicationIconPath = applicationIconPath;
+		this.applicationName = applicationName;
+	}
 
+	public void setMainFrame(MainFrame mainFrame) {
 		if (useTray) {
-			final TrayPopup trayPopup = new TrayPopup(mainFrame);
+			final TrayPopup trayPopup = new TrayPopup(mainFrame, applicationName);
 
-			final Image iconImage = Toolkit.getDefaultToolkit().getImage(getClass().
-				getResource(Configuration.INSTANCE.get("application.icon.path")));
+			final Image iconImage = Toolkit.getDefaultToolkit()
+					.getImage(getClass()
+							.getResource(applicationIconPath)
+					);
 
 			trayIcon = new TrayIcon(iconImage);
 

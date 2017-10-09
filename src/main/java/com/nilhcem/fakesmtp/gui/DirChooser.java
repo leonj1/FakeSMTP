@@ -1,14 +1,14 @@
 package com.nilhcem.fakesmtp.gui;
 
-import java.awt.Component;
-import java.io.File;
-import java.util.Observable;
-import java.util.Observer;
-import javax.swing.JFileChooser;
-import com.nilhcem.fakesmtp.core.Configuration;
 import com.nilhcem.fakesmtp.core.I18n;
 import com.nilhcem.fakesmtp.gui.info.SaveMsgField;
 import com.nilhcem.fakesmtp.model.UIModel;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+import java.util.Observable;
+import java.util.Observer;
 
 /**
  * Provides a graphical directory chooser dialog.
@@ -22,20 +22,34 @@ import com.nilhcem.fakesmtp.model.UIModel;
  */
 public final class DirChooser extends Observable implements Observer {
 
-	private final JFileChooser dirChooser = new JFileChooser();
-	private Component parent = null;
+	private JFileChooser dirChooser;
+	private Component parent;
+	private UIModel uiModel;
+	private String emailDefaultDirectory;
 
 	/**
 	 * Creates a {@code JFileChooser} component and sets it to be for directories only.
 	 *
 	 * @param parent the component from where the chooser will be launched <i>(should be the main panel of the application)</i>.
+	 * @param emailDefaultDirectory
 	 */
-	public DirChooser(Component parent) {
-		this.parent = parent;
+	public DirChooser(JFileChooser dirChooser, String applicationName, UIModel uiModel, String emailDefaultDirectory) {
+		this.uiModel = uiModel;
+		this.emailDefaultDirectory = emailDefaultDirectory;
+		this.dirChooser = dirChooser;
 		dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		dirChooser.setDialogTitle(String.format(I18n.INSTANCE.get("dirchooser.title"),
-			Configuration.INSTANCE.get("application.name")));
+		dirChooser.setDialogTitle(
+				String.format(
+						I18n.INSTANCE.get("dirchooser.title"),
+						applicationName
+				)
+		);
 		dirChooser.setApproveButtonText(I18n.INSTANCE.get("dirchooser.approve.btn"));
+	}
+
+
+	public void setParent(Component parent) {
+		this.parent = parent;
 	}
 
 	/**
@@ -65,15 +79,15 @@ public final class DirChooser extends Observable implements Observer {
 	 * </p>
 	 */
 	private void openFolderSelection() {
-		File filePath = new File(Configuration.INSTANCE.get("emails.default.dir"));
-		dirChooser.setCurrentDirectory(filePath);
+		File filePath = new File(this.emailDefaultDirectory);
+		this.dirChooser.setCurrentDirectory(filePath);
 
-		int result = dirChooser.showOpenDialog(parent);
+		int result = this.dirChooser.showOpenDialog(this.parent);
 
 		if (result == JFileChooser.APPROVE_OPTION) {
-			File selectedDir = dirChooser.getSelectedFile();
+			File selectedDir = this.dirChooser.getSelectedFile();
 			if (selectedDir != null) {
-				UIModel.INSTANCE.setSavePath(selectedDir.getAbsolutePath());
+				this.uiModel.setSavePath(selectedDir.getAbsolutePath());
 				setChanged();
 				notifyObservers();
 			}

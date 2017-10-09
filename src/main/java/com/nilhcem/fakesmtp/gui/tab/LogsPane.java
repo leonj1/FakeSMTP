@@ -2,15 +2,13 @@ package com.nilhcem.fakesmtp.gui.tab;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.AppenderAttachable;
-import com.nilhcem.fakesmtp.core.Configuration;
 import com.nilhcem.fakesmtp.gui.info.ClearAllButton;
 import com.nilhcem.fakesmtp.log.SMTPLogsAppender;
 import com.nilhcem.fakesmtp.log.SMTPLogsObservable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Observable;
@@ -27,11 +25,14 @@ public final class LogsPane implements Observer {
 	private final JScrollPane logsPane = new JScrollPane();
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm:ss a");
 	private final JTextArea logsArea = new JTextArea();
+	private String logAppenderName;
 
 	/**
 	 * Creates the text area, sets it as non-editable and sets an observer to intercept logs.
+	 * @param logAppenderName
 	 */
-	public LogsPane() {
+	public LogsPane(String logAppenderName) {
+		this.logAppenderName = logAppenderName;
 		logsArea.setEditable(false);
 		logsPane.getViewport().add(logsArea, null);
 		addObserverToSmtpLogAppender();
@@ -55,7 +56,7 @@ public final class LogsPane implements Observer {
 	 */
 	private void addObserverToSmtpLogAppender() {
 		Logger smtpLogger = LoggerFactory.getLogger(org.subethamail.smtp.server.Session.class);
-		String appenderName = Configuration.INSTANCE.get("logback.appender.name");
+		String appenderName = this.logAppenderName;
 
 		@SuppressWarnings("unchecked")
 		SMTPLogsAppender<ILoggingEvent> appender = (SMTPLogsAppender<ILoggingEvent>)

@@ -18,6 +18,13 @@
 	</properties>
 
 	<dependencies>
+		<!-- Better-preconditions -->
+		<dependency>
+			<groupId>com.github.choonchernlim</groupId>
+			<artifactId>better-preconditions</artifactId>
+			<version>0.1.1</version>
+		</dependency>
+
 		<dependency>
 			<groupId>com.josemleon</groupId>
 			<artifactId>recon</artifactId>

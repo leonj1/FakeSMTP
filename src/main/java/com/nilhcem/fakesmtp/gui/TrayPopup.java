@@ -3,8 +3,8 @@ package com.nilhcem.fakesmtp.gui;
 import com.nilhcem.fakesmtp.core.I18n;
 import com.nilhcem.fakesmtp.gui.listeners.AboutActionListener;
 import com.nilhcem.fakesmtp.gui.listeners.ExitActionListener;
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
+
+import java.awt.*;
 
 /**
  * Provides the popup menu for the SystemTray icon.
@@ -22,10 +22,10 @@ public class TrayPopup {
 	 *
 	 * @param mainFrame MainFrame class.
 	 */
-	public TrayPopup(final MainFrame mainFrame) {
+	public TrayPopup(final MainFrame mainFrame, String applicationName) {
 		// Create a popup menu components
 		MenuItem aboutItem = new MenuItem(i18n.get("menubar.about"));
-		aboutItem.addActionListener(new AboutActionListener(null));
+		aboutItem.addActionListener(new AboutActionListener(null, applicationName));
 
 		MenuItem exitItem = new MenuItem(i18n.get("menubar.exit"));
 		exitItem.addActionListener(new ExitActionListener(mainFrame));

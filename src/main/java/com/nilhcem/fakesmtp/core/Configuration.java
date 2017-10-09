@@ -1,13 +1,14 @@
 package com.nilhcem.fakesmtp.core;
 
+import org.apache.commons.io.IOUtils;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.LoggerFactory;
 
 /**
  * Contains and returns some project-specific configuration variables.
@@ -15,9 +16,7 @@ import org.slf4j.LoggerFactory;
  * @author Nilhcem
  * @since 1.0
  */
-public enum Configuration {
-	INSTANCE;
-
+public class Configuration {
 	private static final String CONFIG_FILE = "/configuration.properties";
 	private static final String USER_CONFIG_FILE = ".fakeSMTP.properties";
 	private final Properties config = new Properties();
@@ -25,7 +24,7 @@ public enum Configuration {
 	/**
 	 * Opens the "{@code configuration.properties}" file and maps data.
 	 */
-	Configuration() {
+	public Configuration() {
 		InputStream in = getClass().getResourceAsStream(CONFIG_FILE);
 		try {
 			// Load defaults settings
@@ -102,7 +101,7 @@ public enum Configuration {
 				IOUtils.closeQuietly(fis);
 			}
 		}
-		return INSTANCE;
+		return this;
 	}
 
 	/**

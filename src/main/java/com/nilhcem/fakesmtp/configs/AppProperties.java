@@ -2,8 +2,10 @@ package com.nilhcem.fakesmtp.configs;
 
 import com.josemleon.AppProperty;
 import com.josemleon.exceptions.PropertiesFileNotFoundException;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.io.IOException;
+import java.net.InetAddress;
 
 /**
  * Created for K and M Consulting LLC.
@@ -25,32 +27,67 @@ public class AppProperties {
         return Boolean.parseBoolean(this.getProperty.value("background"));
     }
 
-    public String getKeyStoreFilePath() throws PropertiesFileNotFoundException, IOException {
+    public int getPort() throws PropertiesFileNotFoundException, IOException {
+        return Integer.parseInt(this.getProperty.value("port"));
+    }
+
+    public String getOutputDirectory() throws PropertiesFileNotFoundException, IOException {
         return this.getProperty.value("output-dir");
     }
 
-    public String getTruststoreFilePath() throws PropertiesFileNotFoundException, IOException {
-        return this.getProperty.value("port");
-    }
-
-    public String getSuperSecretToken() throws PropertiesFileNotFoundException, IOException {
+    public String getRelayDomains() throws PropertiesFileNotFoundException, IOException {
         return this.getProperty.value("relay-domains");
     }
 
-    public int getClientPort() throws PropertiesFileNotFoundException, IOException {
-        return Integer.parseInt(this.getProperty.value("memory-mode"));
+    public boolean getMemoryMode() throws PropertiesFileNotFoundException, IOException {
+        return Boolean.parseBoolean(this.getProperty.value("memory-mode"));
     }
 
-    public String dbUrl() throws PropertiesFileNotFoundException, IOException {
-        return this.getProperty.value("bind-address");
+    public InetAddress getBindAddress() throws PropertiesFileNotFoundException, IOException {
+        return InetAddress.getByName(this.getProperty.value("bind-address"));
     }
 
-    public String getDbUser() throws PropertiesFileNotFoundException, IOException {
+    public String getEmlViewer() throws PropertiesFileNotFoundException, IOException {
         return this.getProperty.value("eml-viewer");
+    }
+
+    public String getApplicationIconPath() throws PropertiesFileNotFoundException, IOException {
+        return this.getProperty.value("application.icon.path");
     }
 
     public boolean shouldStartInBackground() throws PropertiesFileNotFoundException, IOException {
         return startServer() && startInBackground();
     }
 
+    public String emailSuffix() throws PropertiesFileNotFoundException, IOException {
+        return this.getProperty.value("email.suffix");
+    }
+
+    public String applicationName() throws PropertiesFileNotFoundException, IOException {
+        return this.getProperty.value("application.name");
+    }
+
+    public int applicationMinHeight() throws PropertiesFileNotFoundException, IOException {
+        return Integer.parseInt(this.getProperty.value("app.min.height"));
+    }
+
+    public int applicationMinWidth() throws PropertiesFileNotFoundException, IOException {
+        return Integer.parseInt(this.getProperty.value("app.min.width"));
+    }
+
+    public int defaultPort() throws PropertiesFileNotFoundException, IOException {
+        return Integer.parseInt(this.getProperty.value("default.port"));
+    }
+
+    public String emailDefaultDirectory() throws PropertiesFileNotFoundException, IOException {
+        return this.getProperty.value("email.default.directory");
+    }
+
+    public String logAppenderName() throws PropertiesFileNotFoundException, IOException {
+        return this.getProperty.value("log.appender.name");
+    }
+
+    public boolean applicationTrayInUse() throws PropertiesFileNotFoundException, IOException {
+        return Boolean.parseBoolean(this.getProperty.value("application.tray.in.use"));
+    }
 }

@@ -1,7 +1,5 @@
 package com.nilhcem.fakesmtp.gui.tab;
 
-import com.nilhcem.fakesmtp.core.ArgsHandler;
-import com.nilhcem.fakesmtp.core.Configuration;
 import com.nilhcem.fakesmtp.core.I18n;
 import com.nilhcem.fakesmtp.gui.info.ClearAllButton;
 import com.nilhcem.fakesmtp.model.EmailModel;
@@ -11,12 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.mail.internet.MimeUtility;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.Desktop;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
@@ -46,6 +41,10 @@ public final class MailsListPane implements Observer {
 	private final JScrollPane mailsListPane = new JScrollPane();
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm:ss a");
 	private final int[] widths = new int[] {85, 140, 140}; // widths of columns in tab
+	private UIModel uiModel;
+	private boolean memoryModeEnabled;
+	private String emlViewer;
+	private String applicationName;
 
 	/**
 	 * Table with non-editable cells.
@@ -80,13 +79,17 @@ public final class MailsListPane implements Observer {
 	 * (for example when the user maximizes the window).
 	 * </p>
 	 */
-	public MailsListPane() {
+	public MailsListPane(final UIModel uiModel, boolean memoryModeEnabled, final String emlViewer, String applicationName) {
+		this.uiModel = uiModel;
+		this.memoryModeEnabled = memoryModeEnabled;
+		this.emlViewer = emlViewer;
+		this.applicationName = applicationName;
 		// Init desktop (Java 6 Desktop API)
 		if (Desktop.isDesktopSupported()) {
 			desktop = Desktop.getDesktop();
 		}
 
-		if (!ArgsHandler.INSTANCE.memoryModeEnabled()) {
+		if (!this.memoryModeEnabled) {
 			table.addMouseListener(new MouseListener() {
 				@Override
 				public void mouseReleased(MouseEvent e) {
@@ -107,12 +110,10 @@ public final class MailsListPane implements Observer {
 				@Override
 				public void mouseClicked(MouseEvent e) {
 
-					String emlViewer = ArgsHandler.INSTANCE.getEmlViewer();
-
 					if (e.getClickCount() == 2 && (emlViewer != null || desktop != null)) {
 						File file = null;
 						JTable target = (JTable) e.getSource();
-						String fileName = UIModel.INSTANCE.getListMailsMap().get(target.getSelectedRow());
+						String fileName = uiModel.getListMailsMap().get(target.getSelectedRow());
 						if (fileName == null) {
 							LOGGER.error("Can't find any associated email for row #{}", target.getSelectedRow());
 						} else {
@@ -207,10 +208,10 @@ public final class MailsListPane implements Observer {
 			}
 
 			model.addRow(new Object[] {dateFormat.format(email.getReceivedDate()), email.getFrom(), email.getTo(), subject});
-			UIModel.INSTANCE.getListMailsMap().put(nbElements++, email.getFilePath());
+			this.uiModel.getListMailsMap().put(nbElements++, email.getFilePath());
 		} else if (o instanceof ClearAllButton) {
 			// Delete information from the map
-			UIModel.INSTANCE.getListMailsMap().clear();
+			this.uiModel.getListMailsMap().clear();
 
 			// Remove elements from the list
 			try {
@@ -230,7 +231,7 @@ public final class MailsListPane implements Observer {
 	 */
 	private void displayError(String error) {
 		JOptionPane.showMessageDialog(mailsListPane.getParent(), error,
-			String.format(i18n.get("mailslist.err.title"), Configuration.INSTANCE.get("application.name")),
+			String.format(i18n.get("mailslist.err.title"), applicationName),
 			JOptionPane.ERROR_MESSAGE);
 	}
 }
