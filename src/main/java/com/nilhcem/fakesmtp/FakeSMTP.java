@@ -1,12 +1,20 @@
 package com.nilhcem.fakesmtp;
 
 import com.apple.eawt.Application;
+import com.google.common.collect.Lists;
 import com.josemleon.CommandlineParser;
 import com.josemleon.GetEffectiveProperty;
 import com.josemleon.GetProperty;
 import com.josemleon.Parser;
 import com.josemleon.exceptions.PropertiesFileNotFoundException;
 import com.nilhcem.fakesmtp.configs.AppProperties;
+import com.nilhcem.fakesmtp.controllers.Controller;
+import com.nilhcem.fakesmtp.controllers.EmailMessagesController;
+import com.nilhcem.fakesmtp.controllers.HealthCheckController;
+import com.nilhcem.fakesmtp.controllers.RestEndpoints;
+import com.nilhcem.fakesmtp.controllers.routes.ClearAllMessagesRoute;
+import com.nilhcem.fakesmtp.controllers.routes.GetAllEmailsRoute;
+import com.nilhcem.fakesmtp.controllers.routes.health.HealthCheckRoute;
 import com.nilhcem.fakesmtp.core.Configuration;
 import com.nilhcem.fakesmtp.core.I18n;
 import com.nilhcem.fakesmtp.core.exception.UncaughtExceptionHandler;
@@ -23,21 +31,25 @@ import com.nilhcem.fakesmtp.gui.listeners.MainWindowListener;
 import com.nilhcem.fakesmtp.gui.tab.LastMailPane;
 import com.nilhcem.fakesmtp.gui.tab.LogsPane;
 import com.nilhcem.fakesmtp.gui.tab.MailsListPane;
+import com.nilhcem.fakesmtp.model.EmailMessage;
 import com.nilhcem.fakesmtp.model.UIModel;
 import com.nilhcem.fakesmtp.server.MailListener;
 import com.nilhcem.fakesmtp.server.MailSaver;
 import com.nilhcem.fakesmtp.server.SMTPServerHandler;
+import com.nilhcem.fakesmtp.services.EmailMessageService;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.subethamail.smtp.helper.SimpleMessageListenerAdapter;
 import org.subethamail.smtp.server.SMTPServer;
+import spark.Spark;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.List;
 
 /**
  * Entry point of the application.
@@ -84,10 +96,30 @@ public final class FakeSMTP {
                 )
         );
 
+        List<EmailMessage> messages = Lists.newArrayList();
+
         MailSaver mailSaver = new MailSaver(
                 appProperties.getMemoryMode(),
-                appProperties.emailSuffix()
+                appProperties.emailSuffix(),
+                messages
         );
+        // Our REST endpoint
+        Spark.port(appProperties.httpServerPort());
+
+        EmailMessageService emailMessageService = new EmailMessageService(messages);
+        RestEndpoints restEndpoints = new RestEndpoints(
+                new Controller[]{
+                        new EmailMessagesController(
+                                new GetAllEmailsRoute(emailMessageService),
+                                new ClearAllMessagesRoute(emailMessageService)
+                        ),
+                        new HealthCheckController(
+                                new HealthCheckRoute()
+                        )
+                }
+        );
+        restEndpoints.start();
+
         MailListener mailListener = new MailListener(mailSaver);
         final SMTPServerHandler smtpServerHandler = new SMTPServerHandler(
                 mailSaver,

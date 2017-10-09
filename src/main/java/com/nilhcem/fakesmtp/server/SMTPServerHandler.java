@@ -22,12 +22,6 @@ public class SMTPServerHandler {
 	private final MailListener mailListener;
 	private final SMTPServer smtpServer;
 
-//	SMTPServerHandler() {
-//		this.mailSaver = new MailSaver();
-//		this.myListener = new MailListener(mailSaver);
-//		this.smtpServer = new SMTPServer(new SimpleMessageListenerAdapter(myListener), new SMTPAuthHandlerFactory());
-//	}
-
 	public SMTPServerHandler(MailSaver mailSaver, MailListener mailListener, SMTPServer smtpServer) {
 		this.mailSaver = mailSaver;
 		this.mailListener = mailListener;

@@ -90,4 +90,8 @@ public class AppProperties {
     public boolean applicationTrayInUse() throws PropertiesFileNotFoundException, IOException {
         return Boolean.parseBoolean(this.getProperty.value("application.tray.in.use"));
     }
+
+    public int httpServerPort() throws PropertiesFileNotFoundException, IOException {
+        return Integer.parseInt(this.getProperty.value("http.server.port"));
+    }
 }

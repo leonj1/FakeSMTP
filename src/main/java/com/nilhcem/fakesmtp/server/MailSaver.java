@@ -1,6 +1,7 @@
 package com.nilhcem.fakesmtp.server;
 
 import com.nilhcem.fakesmtp.core.I18n;
+import com.nilhcem.fakesmtp.model.EmailMessage;
 import com.nilhcem.fakesmtp.model.EmailModel;
 import com.nilhcem.fakesmtp.model.UIModel;
 import org.apache.commons.io.FileUtils;
@@ -38,10 +39,12 @@ public final class MailSaver extends Observable {
 	private UIModel uiModel;
 	private boolean memoryModeEnabled;
 	private String emailSuffix;
+	private List<EmailMessage> messages;
 
-	public MailSaver(boolean memoryModeEnabled, String emailSuffix) {
+	public MailSaver(boolean memoryModeEnabled, String emailSuffix, List<EmailMessage> messages) {
 		this.memoryModeEnabled = memoryModeEnabled;
 		this.emailSuffix = emailSuffix;
+		this.messages = messages;
 	}
 
 	public void setUiModel(UIModel uiModel) {
@@ -79,7 +82,8 @@ public final class MailSaver extends Observable {
 		model.setFrom(from);
 		model.setTo(to);
 		String mailContent = convertStreamToString(data);
-		model.setSubject(getSubjectFromStr(mailContent));
+		String subject = getSubjectFromStr(mailContent);
+		model.setSubject(subject);
 		model.setEmailStr(mailContent);
 
 		synchronized (getLock()) {
@@ -91,6 +95,14 @@ public final class MailSaver extends Observable {
 			setChanged();
 			notifyObservers(model);
 		}
+		this.messages.add(
+				new EmailMessage(
+						to,
+						from,
+						subject,
+						mailContent
+				)
+		);
 	}
 
 	/**
