@@ -1,4 +1,4 @@
-all: docker
+all: integration
 
 clean:
 	mvn clean
@@ -8,4 +8,7 @@ compile: clean
 
 docker: compile
 	docker build -t dapidi/fakesmtp:latest .
+
+integration: docker
+	./integration/test.sh
 
