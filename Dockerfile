@@ -1,13 +1,12 @@
-FROM java:8
+FROM anapsix/alpine-java
 
-RUN mkdir -p /output
+MAINTAINER Jose Leon <leonj1@gmail.com>
 
-ADD http://nilhcem.github.com/FakeSMTP/downloads/fakeSMTP-latest.zip /fakeSMTP-latest.zip
+RUN apk update && \
+    apk add bash bash-doc bash-completion
 
-RUN unzip /fakeSMTP-latest.zip
+ADD target/fakeSMTP-2.1-SNAPSHOT.jar /fakeSMTP.jar
+ADD bootstrap.sh /
 
-VOLUME /output
+ENTRYPOINT ["/bootstrap.sh"]
 
-EXPOSE 25
-
-ENTRYPOINT ["java","-jar","/fakeSMTP-2.0.jar","--background", "--output-dir", "/output", "--port", "25", "--start-server"]
